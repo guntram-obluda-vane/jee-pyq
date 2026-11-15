@@ -29,7 +29,7 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 20px; overflow-x: hidden; }
-    .app { width: 100%; max-width: 1200px; }
+    .app { width: 100%; max-width: 1000px; }
 
     /* Header & Breadcrumbs */
     header {
@@ -46,118 +46,139 @@
     /* "Items" Taskbar Trigger Button */
     .items-toggle-btn {
       background: var(--surface); border: 1px solid var(--border); color: var(--text);
-      padding: 9px 16px; border-radius: 9px; font-weight: 600; font-size: 0.9rem;
+      padding: 10px 18px; border-radius: 9px; font-weight: 600; font-size: 0.95rem;
       cursor: pointer; transition: 0.15s; display: flex; align-items: center; gap: 8px;
     }
     .items-toggle-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
 
     /* Slide-Out Side Taskbar (Drawer) */
     .drawer-backdrop {
-      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55);
-      opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 90;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.6);
+      display: none; z-index: 900;
     }
-    .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+    .drawer-backdrop.open { display: block; }
 
     .side-taskbar {
-      position: fixed; top: 0; right: 0; width: 320px; max-width: 85vw; height: 100vh;
+      position: fixed; top: 0; right: -360px; width: 340px; max-width: 88vw; height: 100vh;
       background: var(--surface); border-left: 1px solid var(--border);
-      transform: translateX(100%); transition: transform 0.25s ease;
-      z-index: 100; display: flex; flex-direction: column; padding: 22px 20px;
+      transition: right 0.25s ease;
+      z-index: 1000; display: flex; flex-direction: column; padding: 22px 20px;
+      box-shadow: -8px 0 30px rgba(0,0,0,0.5);
     }
-    .side-taskbar.open { transform: translateX(0); }
+    .side-taskbar.open { right: 0; }
     .drawer-header {
       display: flex; justify-content: space-between; align-items: center;
       padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
     }
-    .drawer-title { font-size: 1.1rem; font-weight: 700; }
+    .drawer-title { font-size: 1.15rem; font-weight: 700; }
     .drawer-close {
-      background: #1e2436; border: 1px solid var(--border); color: var(--muted);
-      width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1rem;
+      background: #1e2436; border: 1px solid var(--border); color: var(--text);
+      width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 1rem;
     }
-    .drawer-close:hover { color: var(--text); border-color: var(--accent); }
+    .drawer-close:hover { border-color: var(--accent); }
     .drawer-empty {
       flex: 1; display: flex; align-items: center; justify-content: center;
-      text-align: center; color: var(--muted); font-size: 0.9rem;
+      text-align: center; color: var(--muted); font-size: 0.92rem;
       border: 1px dashed var(--border); border-radius: 12px; padding: 24px;
     }
 
     /* View Containers */
-    .view { display: none; animation: fadeIn 0.2s ease; }
+    .view { display: none; }
     .view.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
     .hero-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 6px; }
     .hero-sub { color: var(--muted); margin-bottom: 24px; }
 
-    /* Custom Horizontal Scrollbars */
-    .h-scroll::-webkit-scrollbar { height: 8px; }
-    .h-scroll::-webkit-scrollbar-track { background: var(--surface); border-radius: 99px; }
+    /* Custom Horizontal Scrollbar for wide cells */
+    .h-scroll::-webkit-scrollbar { height: 6px; }
+    .h-scroll::-webkit-scrollbar-track { background: transparent; }
     .h-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
     .h-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-    /* Step 1: Wide Horizontally Scrollable Subject Cards */
-    .subject-scroll {
-      display: flex; gap: 20px; overflow-x: auto; padding-bottom: 16px;
-      scroll-snap-type: x mandatory;
+    /* Vertical List Layout (Subjects & Chapters stacked vertically, no serial numbers) */
+    .vertical-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
     }
-    .subject-card {
-      flex: 0 0 380px; scroll-snap-align: start;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
-      padding: 34px 28px; cursor: pointer; transition: 0.2s;
+
+    /* Subject Row Cell (Full width, horizontally scrollable inside if text is long) */
+    .subject-cell {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px 28px;
+      cursor: pointer;
+      transition: 0.18s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      overflow-x: auto;
+      white-space: nowrap;
     }
-    .subject-card:hover { transform: translateY(-3px); background: var(--surface-hover); }
-    .subject-card.phy:hover { border-color: var(--phy); }
-    .subject-card.chem:hover { border-color: var(--chem); }
-    .subject-card.math:hover { border-color: var(--math); }
+    .subject-cell:hover { background: var(--surface-hover); transform: translateX(4px); }
+    .subject-cell.phy:hover { border-color: var(--phy); }
+    .subject-cell.chem:hover { border-color: var(--chem); }
+    .subject-cell.math:hover { border-color: var(--math); }
+
+    .sub-left { display: flex; align-items: center; gap: 20px; min-width: max-content; }
     .sub-badge {
-      width: 50px; height: 50px; border-radius: 12px;
-      font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+      width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+      font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
     }
     .phy .sub-badge { background: rgba(59, 130, 246, 0.15); color: var(--phy); }
     .chem .sub-badge { background: rgba(16, 185, 129, 0.15); color: var(--chem); }
     .math .sub-badge { background: rgba(245, 158, 11, 0.15); color: var(--math); }
-    .subject-card h2 { font-size: 1.45rem; margin-bottom: 8px; }
-    .subject-card p { color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
 
-    /* Step 2: Wide Horizontally Scrollable Chapter List */
-    .chapter-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .sub-info h2 { font-size: 1.35rem; margin-bottom: 4px; }
+    .sub-info p { color: var(--muted); font-size: 0.95rem; }
+    .cell-arrow { color: var(--muted); font-size: 1.25rem; font-weight: 700; flex-shrink: 0; }
+
+    /* Step 2: Chapter Vertical List (Wide cells, horizontally scrollable inside) */
+    .chapter-controls { display: flex; gap: 12px; margin-bottom: 20px; width: 100%; }
     .search-input {
-      flex: 1; min-width: 240px; max-width: 480px; padding: 12px 16px; border-radius: 10px;
+      width: 100%; padding: 14px 18px; border-radius: 10px;
       background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 0.95rem;
     }
     .search-input:focus { outline: none; border-color: var(--accent); }
 
-    .chapter-scroll {
-      display: grid;
-      grid-template-rows: repeat(3, minmax(84px, auto));
-      grid-auto-flow: column;
-      grid-auto-columns: 380px;
-      gap: 14px;
+    .chapter-cell {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 24px;
+      cursor: pointer;
+      transition: 0.15s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
       overflow-x: auto;
-      padding-bottom: 16px;
-      scroll-snap-type: x mandatory;
+      white-space: nowrap;
     }
-    .chapter-item {
-      scroll-snap-align: start;
-      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-      padding: 18px 22px; cursor: pointer; transition: 0.15s;
-      display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    .chapter-cell:hover { background: var(--surface-hover); border-color: var(--accent); transform: translateX(4px); }
+    .chap-left { display: flex; align-items: center; gap: 16px; min-width: max-content; }
+    .chap-name { font-weight: 600; font-size: 1.05rem; }
+    .chap-tag {
+      font-size: 0.8rem; color: var(--muted); background: #1a2030;
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
     }
-    .chapter-item:hover { background: var(--surface-hover); border-color: var(--accent); }
-    .chap-name { font-weight: 600; font-size: 1rem; line-height: 1.4; }
-    .chap-tag { font-size: 0.8rem; color: var(--muted); margin-top: 5px; }
-    .chap-arrow { color: var(--muted); font-weight: bold; font-size: 1.1rem; }
 
     /* Step 3: Practice Arena */
     .stats-bar {
       display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center;
       background: var(--surface); border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; margin-bottom: 18px;
     }
-    .stat-group { display: flex; gap: 20px; font-size: 0.95rem; font-weight: 600; }
+    .stat-group { display: flex; gap: 20px; font-size: 0.95rem; font-weight: 600; flex-wrap: wrap; }
     .stat-group span { color: var(--accent); }
     .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
     .q-meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
-    .q-body { font-size: 1.12rem; line-height: 1.65; margin-bottom: 22px; }
+    .q-body { font-size: 1.12rem; line-height: 1.65; margin-bottom: 22px; overflow-x: auto; }
     .options-list { display: grid; gap: 12px; }
     .option-btn {
       width: 100%; text-align: left; padding: 14px 18px; border-radius: 10px;
@@ -173,7 +194,6 @@
     }
     .btn-primary { background: var(--accent); color: white; }
     .btn-secondary { background: #22293a; color: var(--text); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -185,45 +205,60 @@
       <div class="brand" onclick="goHome()">JEE<span>PYQ</span></div>
       <div class="breadcrumb" id="breadcrumb">Select a Subject</div>
     </div>
-    <button class="items-toggle-btn" onclick="toggleTaskbar()">☰ Items</button>
+    <button type="button" class="items-toggle-btn" id="itemsBtn">☰ Items</button>
   </header>
 
-  <!-- VIEW 1: SUBJECT SELECTION (P, C, M) -->
+  <!-- VIEW 1: SUBJECT SELECTION (Vertical List, Wide Cells) -->
   <section id="view-subjects" class="view active">
     <h1 class="hero-title">Choose Your Subject</h1>
-    <p class="hero-sub">Scroll horizontally and pick a subject to browse JEE chapters.</p>
+    <p class="hero-sub">Select a subject below to view all chapters.</p>
 
-    <div class="subject-scroll h-scroll">
-      <div class="subject-card phy" onclick="openSubject('Physics')">
-        <div class="sub-badge">P</div>
-        <h2>Physics</h2>
-        <p>20 Units • Mechanics, Electrodynamics, Optics & Modern Physics</p>
+    <div class="vertical-list">
+      <div class="subject-cell phy h-scroll" onclick="openSubject('Physics')">
+        <div class="sub-left">
+          <div class="sub-badge">P</div>
+          <div class="sub-info">
+            <h2>Physics</h2>
+            <p>Mechanics • Electrodynamics • Modern Physics • Optics • Thermodynamics • Waves</p>
+          </div>
+        </div>
+        <div class="cell-arrow">→</div>
       </div>
 
-      <div class="subject-card chem" onclick="openSubject('Chemistry')">
-        <div class="sub-badge">C</div>
-        <h2>Chemistry</h2>
-        <p>20 Units • Physical, Inorganic & Organic Chemistry</p>
+      <div class="subject-cell chem h-scroll" onclick="openSubject('Chemistry')">
+        <div class="sub-left">
+          <div class="sub-badge">C</div>
+          <div class="sub-info">
+            <h2>Chemistry</h2>
+            <p>Physical Chemistry • Organic Chemistry • Inorganic Chemistry • Coordination & Bonding</p>
+          </div>
+        </div>
+        <div class="cell-arrow">→</div>
       </div>
 
-      <div class="subject-card math" onclick="openSubject('Mathematics')">
-        <div class="sub-badge">M</div>
-        <h2>Mathematics</h2>
-        <p>14 Units • Calculus, Algebra, Coordinate Geometry & Vectors</p>
+      <div class="subject-cell math h-scroll" onclick="openSubject('Mathematics')">
+        <div class="sub-left">
+          <div class="sub-badge">M</div>
+          <div class="sub-info">
+            <h2>Mathematics</h2>
+            <p>Integral & Differential Calculus • Coordinate Geometry • Vectors & 3D • Algebra & Matrices</p>
+          </div>
+        </div>
+        <div class="cell-arrow">→</div>
       </div>
     </div>
   </section>
 
-  <!-- VIEW 2: CHAPTER SELECTION -->
+  <!-- VIEW 2: CHAPTER SELECTION (Vertical List, No Serial Numbers, Wide Cells) -->
   <section id="view-chapters" class="view">
     <h1 class="hero-title" id="selectedSubjectTitle">Physics Chapters</h1>
-    <p class="hero-sub">Scroll horizontally or search to select a chapter.</p>
+    <p class="hero-sub">Click any chapter to start PYQ practice.</p>
 
     <div class="chapter-controls">
       <input type="text" id="chapterSearch" class="search-input" placeholder="Search chapters (e.g., Rotational, Electrostatics, Calculus)..." oninput="filterChapters()" />
     </div>
 
-    <div class="chapter-scroll h-scroll" id="chapterGrid"></div>
+    <div class="vertical-list" id="chapterList"></div>
   </section>
 
   <!-- VIEW 3: PYQ PRACTICE ARENA -->
@@ -256,54 +291,61 @@
   </section>
 </div>
 
-<!-- Temporary Empty Side Taskbar Drawer -->
-<div class="drawer-backdrop" id="drawerBackdrop" onclick="toggleTaskbar()"></div>
+<!-- Slide-Out Empty Side Taskbar Drawer -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="side-taskbar" id="sideTaskbar">
   <div class="drawer-header">
     <span class="drawer-title">Items</span>
-    <button class="drawer-close" onclick="toggleTaskbar()">✕</button>
+    <button type="button" class="drawer-close" id="closeDrawerBtn">✕</button>
   </div>
   <div class="drawer-empty">
-    Taskbar items will appear here later.
+    Empty side taskbar — items will be added here later.
   </div>
 </aside>
 
 <script>
   // ============================================================================
-  // 1. PASTE YOUR SUPABASE URL AND ANON KEY RIGHT HERE:
+  // PASTE YOUR SUPABASE URL AND PUBLISHABLE / ANON KEY HERE:
   // ============================================================================
-  const SUPABASE_URL = "https://ifmcgtgezreraurgqvrq.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_gdypwAeataBE0jhwBcIXxw_ynUOFOm7";
+  const SUPABASE_URL = "PASTE_YOUR_SUPABASE_PROJECT_URL_HERE";
+  const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
 
-  // Side Taskbar Toggle
+  // Side Taskbar Toggle Logic
+  const sideTaskbar = document.getElementById("sideTaskbar");
+  const drawerBackdrop = document.getElementById("drawerBackdrop");
+
   function toggleTaskbar() {
-    document.getElementById("sideTaskbar").classList.toggle("open");
-    document.getElementById("drawerBackdrop").classList.toggle("open");
+    sideTaskbar.classList.toggle("open");
+    drawerBackdrop.classList.toggle("open");
   }
 
-  // Complete Official JEE Main / Advanced Chapter Syllabus
+  document.getElementById("itemsBtn").addEventListener("click", toggleTaskbar);
+  document.getElementById("closeDrawerBtn").addEventListener("click", toggleTaskbar);
+  drawerBackdrop.addEventListener("click", toggleTaskbar);
+
+  // Official JEE Main / Advanced Syllabus (No serial numbers)
   const SYLLABUS = {
     Physics: [
-      { name: "Units and Measurements", class: "Class 11" },
-      { name: "Kinematics", class: "Class 11" },
-      { name: "Laws of Motion", class: "Class 11" },
-      { name: "Work, Energy and Power", class: "Class 11" },
-      { name: "Rotational Motion", class: "Class 11" },
-      { name: "Gravitation", class: "Class 11" },
-      { name: "Properties of Solids and Liquids", class: "Class 11" },
-      { name: "Thermodynamics", class: "Class 11" },
-      { name: "Kinetic Theory of Gases", class: "Class 11" },
-      { name: "Oscillations and Waves", class: "Class 11" },
-      { name: "Electrostatics", class: "Class 12" },
-      { name: "Current Electricity", class: "Class 12" },
-      { name: "Magnetic Effects of Current and Magnetism", class: "Class 12" },
-      { name: "Electromagnetic Induction and Alternating Currents", class: "Class 12" },
-      { name: "Electromagnetic Waves", class: "Class 12" },
-      { name: "Optics (Ray & Wave)", class: "Class 12" },
-      { name: "Dual Nature of Matter and Radiation", class: "Class 12" },
-      { name: "Atoms and Nuclei", class: "Class 12" },
-      { name: "Electronic Devices", class: "Class 12" },
-      { name: "Experimental Skills", class: "Class 11 & 12" }
+      { name: "Units and Measurements", class: "Class 11 • Mechanics" },
+      { name: "Kinematics", class: "Class 11 • Mechanics" },
+      { name: "Laws of Motion", class: "Class 11 • Mechanics" },
+      { name: "Work, Energy and Power", class: "Class 11 • Mechanics" },
+      { name: "Rotational Motion", class: "Class 11 • Mechanics" },
+      { name: "Gravitation", class: "Class 11 • Mechanics" },
+      { name: "Properties of Solids and Liquids", class: "Class 11 • Matter" },
+      { name: "Thermodynamics", class: "Class 11 • Thermal Physics" },
+      { name: "Kinetic Theory of Gases", class: "Class 11 • Thermal Physics" },
+      { name: "Oscillations and Waves", class: "Class 11 • Waves" },
+      { name: "Electrostatics", class: "Class 12 • Electrodynamics" },
+      { name: "Current Electricity", class: "Class 12 • Electrodynamics" },
+      { name: "Magnetic Effects of Current and Magnetism", class: "Class 12 • Electrodynamics" },
+      { name: "Electromagnetic Induction and Alternating Currents", class: "Class 12 • Electrodynamics" },
+      { name: "Electromagnetic Waves", class: "Class 12 • Electrodynamics" },
+      { name: "Optics (Ray & Wave)", class: "Class 12 • Optics" },
+      { name: "Dual Nature of Matter and Radiation", class: "Class 12 • Modern Physics" },
+      { name: "Atoms and Nuclei", class: "Class 12 • Modern Physics" },
+      { name: "Electronic Devices", class: "Class 12 • Semiconductors" },
+      { name: "Experimental Skills", class: "Class 11 & 12 • Practical" }
     ],
     Chemistry: [
       { name: "Some Basic Concepts in Chemistry", class: "Physical • Class 11" },
@@ -328,24 +370,23 @@
       { name: "Principles Related to Practical Chemistry", class: "Practical • Class 11 & 12" }
     ],
     Mathematics: [
-      { name: "Sets, Relations and Functions", class: "Class 11 & 12" },
-      { name: "Complex Numbers and Quadratic Equations", class: "Class 11" },
-      { name: "Matrices and Determinants", class: "Class 12" },
-      { name: "Permutations and Combinations", class: "Class 11" },
-      { name: "Binomial Theorem and its Simple Applications", class: "Class 11" },
-      { name: "Sequence and Series", class: "Class 11" },
-      { name: "Limit, Continuity and Differentiability", class: "Class 11 & 12" },
-      { name: "Integral Calculus", class: "Class 12" },
-      { name: "Differential Equations", class: "Class 12" },
-      { name: "Co-ordinate Geometry", class: "Class 11" },
-      { name: "Three Dimensional Geometry", class: "Class 12" },
-      { name: "Vector Algebra", class: "Class 12" },
-      { name: "Statistics and Probability", class: "Class 11 & 12" },
-      { name: "Trigonometry", class: "Class 11 & 12" }
+      { name: "Sets, Relations and Functions", class: "Class 11 & 12 • Algebra" },
+      { name: "Complex Numbers and Quadratic Equations", class: "Class 11 • Algebra" },
+      { name: "Matrices and Determinants", class: "Class 12 • Algebra" },
+      { name: "Permutations and Combinations", class: "Class 11 • Algebra" },
+      { name: "Binomial Theorem and its Simple Applications", class: "Class 11 • Algebra" },
+      { name: "Sequence and Series", class: "Class 11 • Algebra" },
+      { name: "Limit, Continuity and Differentiability", class: "Class 11 & 12 • Calculus" },
+      { name: "Integral Calculus", class: "Class 12 • Calculus" },
+      { name: "Differential Equations", class: "Class 12 • Calculus" },
+      { name: "Co-ordinate Geometry", class: "Class 11 • Geometry" },
+      { name: "Three Dimensional Geometry", class: "Class 12 • Geometry" },
+      { name: "Vector Algebra", class: "Class 12 • Vectors" },
+      { name: "Statistics and Probability", class: "Class 11 & 12 • Probability" },
+      { name: "Trigonometry", class: "Class 11 & 12 • Trigonometry" }
     ]
   };
 
-  // Sample PYQ fallback bank
   const SAMPLE_QUESTIONS = {
     "Rotational Motion": [
       {
@@ -353,33 +394,10 @@
         text: "A solid sphere of mass $M$ and radius $R$ rolls without slipping down an inclined plane of inclination $\\theta$. What is the linear acceleration of its center of mass?",
         options: ["$\\frac{5}{7}g\\sin\\theta$", "$\\frac{2}{5}g\\sin\\theta$", "$\\frac{1}{2}g\\sin\\theta$", "$g\\sin\\theta$"],
         answer: 0
-      },
-      {
-        year: "JEE Main 2023",
-        text: "Two discs of same moment of inertia rotating about their regular axis passing through centre and perpendicular to the plane of disc with angular velocities $\\omega_1$ and $\\omega_2$. They are brought into contact face to face coinciding the axis of rotation. The expression for loss of energy during this process is:",
-        options: ["$\\frac{1}{4}I(\\omega_1 - \\omega_2)^2$", "$I(\\omega_1 - \\omega_2)^2$", "$\\frac{1}{8}I(\\omega_1 - \\omega_2)^2$", "$\\frac{1}{2}I(\\omega_1 + \\omega_2)^2$"],
-        answer: 0
-      }
-    ],
-    "Electrostatics": [
-      {
-        year: "JEE Main 2024",
-        text: "Two point charges $+4q$ and $-q$ are placed at $x = 0$ and $x = d$ respectively. At what distance from the origin on the x-axis is the net electric field zero?",
-        options: ["$x = 2d$", "$x = -2d$", "$x = d/2$", "$x = 3d$"],
-        answer: 0
-      }
-    ],
-    "Integral Calculus": [
-      {
-        year: "JEE Main 2023",
-        text: "Evaluate the definite integral: $I = \\int_{0}^{\\pi/2} \\frac{\\sin^3 x}{\\sin^3 x + \\cos^3 x} dx$",
-        options: ["$\\frac{\\pi}{2}$", "$\\frac{\\pi}{4}$", "$\\frac{\\pi}{3}$", "$0$"],
-        answer: 1
       }
     ]
   };
 
-  // App State
   let currentSubject = "";
   let currentChapter = "";
   let activeQuestions = [];
@@ -414,20 +432,20 @@
   }
 
   function renderChapters(list) {
-    const grid = document.getElementById("chapterGrid");
-    grid.innerHTML = "";
+    const container = document.getElementById("chapterList");
+    container.innerHTML = "";
     list.forEach(chap => {
-      const card = document.createElement("div");
-      card.className = "chapter-item";
-      card.onclick = () => startPractice(chap.name);
-      card.innerHTML = `
-        <div>
-          <div class="chap-name">${chap.name}</div>
-          <div class="chap-tag">${chap.class}</div>
+      const row = document.createElement("div");
+      row.className = "chapter-cell h-scroll";
+      row.onclick = () => startPractice(chap.name);
+      row.innerHTML = `
+        <div class="chap-left">
+          <span class="chap-name">${chap.name}</span>
+          <span class="chap-tag">${chap.class}</span>
         </div>
-        <div class="chap-arrow">→</div>
+        <div class="cell-arrow">→</div>
       `;
-      grid.appendChild(card);
+      container.appendChild(row);
     });
   }
 
@@ -453,10 +471,9 @@
     const cleanKey = SUPABASE_ANON_KEY.trim();
 
     if (!cleanUrl.startsWith("http") || cleanKey.includes("PASTE_YOUR")) {
-      // If user hasn't pasted Supabase keys yet, use fallback cleanly
       activeQuestions = SAMPLE_QUESTIONS[chapter] || [{
         year: "Setup Needed",
-        text: `Paste your <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> inside <code>index.html</code> (line 213) to load live questions from Supabase for <strong>${chapter}</strong>.`,
+        text: `Paste your <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> inside <code>index.html</code> to load live questions from Supabase for <strong>${chapter}</strong>.`,
         options: ["Option A", "Option B", "Option C", "Option D"],
         answer: 0
       }];
@@ -497,10 +514,9 @@
           }];
         }
       } catch (err) {
-        console.error("Supabase fetch error:", err);
         activeQuestions = [{
           year: "Connection Error",
-          text: `Could not reach Supabase: <code>${err.message}</code>. Make sure you ran the SQL script in Supabase SQL Editor and pasted the exact Project URL & anon public key.`,
+          text: `Could not reach Supabase: <code>${err.message}</code>.`,
           options: ["Retry", "-", "-", "-"],
           answer: 0
         }];
