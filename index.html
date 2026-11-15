@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JEE PYQ Arena</title>
+  <!-- MathJax for clean LaTeX equations -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --surface: #131722;
+      --surface-hover: #1b2131;
+      --border: #252c3f;
+      --text: #eef1f8;
+      --muted: #8b95b0;
+      --phy: #3b82f6;
+      --chem: #10b981;
+      --math: #f59e0b;
+      --accent: #6366f1;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; }
+    .app { width: 100%; max-width: 960px; }
+
+    /* Header & Breadcrumbs */
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
+    }
+    .brand { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
+    .brand span { color: var(--accent); }
+    .breadcrumb { font-size: 0.9rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+    .breadcrumb button { background: none; border: none; color: var(--accent); cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+    .breadcrumb button:hover { text-decoration: underline; }
+
+    /* View Containers */
+    .view { display: none; animation: fadeIn 0.2s ease; }
+    .view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Step 1: Subject Cards */
+    .hero-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 6px; }
+    .hero-sub { color: var(--muted); margin-bottom: 28px; }
+    .subject-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+    .subject-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px 24px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+    }
+    .subject-card:hover { transform: translateY(-3px); background: var(--surface-hover); }
+    .subject-card.phy:hover { border-color: var(--phy); }
+    .subject-card.chem:hover { border-color: var(--chem); }
+    .subject-card.math:hover { border-color: var(--math); }
+    .sub-badge {
+      display: inline-block; width: 44px; height: 44px; border-radius: 10px;
+      font-size: 1.3rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+    }
+    .phy .sub-badge { background: rgba(59, 130, 246, 0.15); color: var(--phy); }
+    .chem .sub-badge { background: rgba(16, 185, 129, 0.15); color: var(--chem); }
+    .math .sub-badge { background: rgba(245, 158, 11, 0.15); color: var(--math); }
+    .subject-card h2 { font-size: 1.3rem; margin-bottom: 6px; }
+    .subject-card p { color: var(--muted); font-size: 0.9rem; }
+
+    /* Step 2: Chapter List */
+    .chapter-controls { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-input {
+      flex: 1; min-width: 240px; padding: 12px 16px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 0.95rem;
+    }
+    .search-input:focus { outline: none; border-color: var(--accent); }
+    .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+    .chapter-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+      padding: 16px 18px; cursor: pointer; transition: 0.15s; display: flex; justify-content: space-between; align-items: center;
+    }
+    .chapter-item:hover { background: var(--surface-hover); border-color: var(--accent); }
+    .chap-name { font-weight: 600; font-size: 0.95rem; line-height: 1.4; }
+    .chap-tag { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .chap-arrow { color: var(--muted); font-weight: bold; }
+
+    /* Step 3: Practice Arena */
+    .stats-bar {
+      display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center;
+      background: var(--surface); border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; margin-bottom: 18px;
+    }
+    .stat-group { display: flex; gap: 20px; font-size: 0.95rem; font-weight: 600; }
+    .stat-group span { color: var(--accent); }
+    .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
+    .q-meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+    .q-body { font-size: 1.12rem; line-height: 1.65; margin-bottom: 22px; }
+    .options-list { display: grid; gap: 12px; }
+    .option-btn {
+      width: 100%; text-align: left; padding: 14px 18px; border-radius: 10px;
+      background: #181d2b; border: 1px solid var(--border); color: var(--text);
+      font-size: 1rem; cursor: pointer; transition: 0.15s; display: flex; gap: 12px; align-items: center;
+    }
+    .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #1f2638; }
+    .option-btn.correct { border-color: var(--green); background: rgba(34, 197, 94, 0.15); }
+    .option-btn.wrong { border-color: var(--red); background: rgba(239, 68, 68, 0.15); }
+    .q-footer { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
+    .btn {
+      padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.95rem;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-secondary { background: #22293a; color: var(--text); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand" onclick="goHome()">JEE<span>PYQ</span></div>
+    <div class="breadcrumb" id="breadcrumb">Select a Subject</div>
+  </header>
+
+  <!-- VIEW 1: SUBJECT SELECTION (P, C, M) -->
+  <section id="view-subjects" class="view active">
+    <h1 class="hero-title">Choose Your Subject</h1>
+    <p class="hero-sub">Pick a subject to browse complete JEE Main & Advanced chapters.</p>
+
+    <div class="subject-grid">
+      <div class="subject-card phy" onclick="openSubject('Physics')">
+        <div class="sub-badge">P</div>
+        <h2>Physics</h2>
+        <p>20 Units • Mechanics, Electrodynamics, Optics & Modern Physics</p>
+      </div>
+
+      <div class="subject-card chem" onclick="openSubject('Chemistry')">
+        <div class="sub-badge">C</div>
+        <h2>Chemistry</h2>
+        <p>20 Units • Physical, Inorganic & Organic Chemistry</p>
+      </div>
+
+      <div class="subject-card math" onclick="openSubject('Mathematics')">
+        <div class="sub-badge">M</div>
+        <h2>Mathematics</h2>
+        <p>14 Units • Calculus, Algebra, Coordinate Geometry & Vectors</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIEW 2: CHAPTER SELECTION -->
+  <section id="view-chapters" class="view">
+    <h1 class="hero-title" id="selectedSubjectTitle">Physics Chapters</h1>
+    <p class="hero-sub">Select a chapter to start timed PYQ practice.</p>
+
+    <div class="chapter-controls">
+      <input type="text" id="chapterSearch" class="search-input" placeholder="Search chapters (e.g., Rotational, Electrostatics, Calculus)..." oninput="filterChapters()" />
+    </div>
+
+    <div class="chapter-grid" id="chapterGrid"></div>
+  </section>
+
+  <!-- VIEW 3: PYQ PRACTICE ARENA -->
+  <section id="view-practice" class="view">
+    <div class="stats-bar">
+      <div class="stat-group">
+        <div>Score: <span id="scoreVal">0</span></div>
+        <div>Accuracy: <span id="accVal">0%</span></div>
+        <div>Q-Time: <span id="qTimeVal">0s</span></div>
+        <div>Total: <span id="totTimeVal">00:00</span></div>
+      </div>
+      <div style="color: var(--muted); font-size: 0.9rem;">
+        Q <span id="qNum">1</span> / <span id="qTotal">1</span>
+      </div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-meta">
+        <span id="qMetaTag">Physics • Chapter</span>
+        <span>Marking: +4 / -1</span>
+      </div>
+      <div class="q-body" id="qText">Loading question...</div>
+      <div class="options-list" id="optionsContainer"></div>
+
+      <div class="q-footer">
+        <button class="btn btn-secondary" onclick="openSubject(currentSubject)">← Change Chapter</button>
+        <button class="btn btn-primary" onclick="nextQuestion()">Next Question →</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Complete Official JEE Main / Advanced Chapter Syllabus
+  const SYLLABUS = {
+    Physics: [
+      { name: "Units and Measurements", class: "Class 11" },
+      { name: "Kinematics", class: "Class 11" },
+      { name: "Laws of Motion", class: "Class 11" },
+      { name: "Work, Energy and Power", class: "Class 11" },
+      { name: "Rotational Motion", class: "Class 11" },
+      { name: "Gravitation", class: "Class 11" },
+      { name: "Properties of Solids and Liquids", class: "Class 11" },
+      { name: "Thermodynamics", class: "Class 11" },
+      { name: "Kinetic Theory of Gases", class: "Class 11" },
+      { name: "Oscillations and Waves", class: "Class 11" },
+      { name: "Electrostatics", class: "Class 12" },
+      { name: "Current Electricity", class: "Class 12" },
+      { name: "Magnetic Effects of Current and Magnetism", class: "Class 12" },
+      { name: "Electromagnetic Induction and Alternating Currents", class: "Class 12" },
+      { name: "Electromagnetic Waves", class: "Class 12" },
+      { name: "Optics (Ray & Wave)", class: "Class 12" },
+      { name: "Dual Nature of Matter and Radiation", class: "Class 12" },
+      { name: "Atoms and Nuclei", class: "Class 12" },
+      { name: "Electronic Devices", class: "Class 12" },
+      { name: "Experimental Skills", class: "Class 11 & 12" }
+    ],
+    Chemistry: [
+      { name: "Some Basic Concepts in Chemistry", class: "Physical • Class 11" },
+      { name: "Atomic Structure", class: "Physical • Class 11" },
+      { name: "Chemical Bonding and Molecular Structure", class: "Inorganic • Class 11" },
+      { name: "Chemical Thermodynamics", class: "Physical • Class 11" },
+      { name: "Solutions", class: "Physical • Class 12" },
+      { name: "Equilibrium", class: "Physical • Class 11" },
+      { name: "Redox Reactions and Electrochemistry", class: "Physical • Class 11 & 12" },
+      { name: "Chemical Kinetics", class: "Physical • Class 12" },
+      { name: "Classification of Elements and Periodicity", class: "Inorganic • Class 11" },
+      { name: "p-Block Elements", class: "Inorganic • Class 11 & 12" },
+      { name: "d- and f-Block Elements", class: "Inorganic • Class 12" },
+      { name: "Coordination Compounds", class: "Inorganic • Class 12" },
+      { name: "Purification and Characterisation of Organic Compounds", class: "Organic • Class 11" },
+      { name: "Some Basic Principles of Organic Chemistry (GOC)", class: "Organic • Class 11" },
+      { name: "Hydrocarbons", class: "Organic • Class 11" },
+      { name: "Organic Compounds Containing Halogens", class: "Organic • Class 12" },
+      { name: "Organic Compounds Containing Oxygen", class: "Organic • Class 12" },
+      { name: "Organic Compounds Containing Nitrogen", class: "Organic • Class 12" },
+      { name: "Biomolecules", class: "Organic • Class 12" },
+      { name: "Principles Related to Practical Chemistry", class: "Practical • Class 11 & 12" }
+    ],
+    Mathematics: [
+      { name: "Sets, Relations and Functions", class: "Class 11 & 12" },
+      { name: "Complex Numbers and Quadratic Equations", class: "Class 11" },
+      { name: "Matrices and Determinants", class: "Class 12" },
+      { name: "Permutations and Combinations", class: "Class 11" },
+      { name: "Binomial Theorem and its Simple Applications", class: "Class 11" },
+      { name: "Sequence and Series", class: "Class 11" },
+      { name: "Limit, Continuity and Differentiability", class: "Class 11 & 12" },
+      { name: "Integral Calculus", class: "Class 12" },
+      { name: "Differential Equations", class: "Class 12" },
+      { name: "Co-ordinate Geometry", class: "Class 11" },
+      { name: "Three Dimensional Geometry", class: "Class 12" },
+      { name: "Vector Algebra", class: "Class 12" },
+      { name: "Statistics and Probability", class: "Class 11 & 12" },
+      { name: "Trigonometry", class: "Class 11 & 12" }
+    ]
+  };
+
+  // Sample PYQ bank (Will be replaced by Supabase DB fetch in Step 2)
+  const SAMPLE_QUESTIONS = {
+    "Rotational Motion": [
+      {
+        year: "JEE Main 2024",
+        text: "A solid sphere of mass $M$ and radius $R$ rolls without slipping down an inclined plane of inclination $\\theta$. What is the linear acceleration of its center of mass?",
+        options: ["$\\frac{5}{7}g\\sin\\theta$", "$\\frac{2}{5}g\\sin\\theta$", "$\\frac{1}{2}g\\sin\\theta$", "$g\\sin\\theta$"],
+        answer: 0
+      },
+      {
+        year: "JEE Main 2023",
+        text: "Two discs of same moment of inertia rotating about their regular axis passing through centre and perpendicular to the plane of disc with angular velocities $\\omega_1$ and $\\omega_2$. They are brought into contact face to face coinciding the axis of rotation. The expression for loss of energy during this process is:",
+        options: ["$\\frac{1}{4}I(\\omega_1 - \\omega_2)^2$", "$I(\\omega_1 - \\omega_2)^2$", "$\\frac{1}{8}I(\\omega_1 - \\omega_2)^2$", "$\\frac{1}{2}I(\\omega_1 + \\omega_2)^2$"],
+        answer: 0
+      }
+    ],
+    "Electrostatics": [
+      {
+        year: "JEE Main 2024",
+        text: "Two point charges $+4q$ and $-q$ are placed at $x = 0$ and $x = d$ respectively. At what distance from the origin on the x-axis is the net electric field zero?",
+        options: ["$x = 2d$", "$x = -2d$", "$x = d/2$", "$x = 3d$"],
+        answer: 0
+      }
+    ],
+    "Integral Calculus": [
+      {
+        year: "JEE Main 2023",
+        text: "Evaluate the definite integral: $I = \\int_{0}^{\\pi/2} \\frac{\\sin^3 x}{\\sin^3 x + \\cos^3 x} dx$",
+        options: ["$\\frac{\\pi}{2}$", "$\\frac{\\pi}{4}$", "$\\frac{\\pi}{3}$", "$0$"],
+        answer: 1
+      }
+    ]
+  };
+
+  // App State
+  let currentSubject = "";
+  let currentChapter = "";
+  let activeQuestions = [];
+  let qIndex = 0;
+  let score = 0, attempted = 0, correct = 0;
+  let qSeconds = 0, totalSeconds = 0;
+  let timerInterval = null;
+  let answered = false;
+
+  // Navigation Helpers
+  function switchView(viewId) {
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById(viewId).classList.add("active");
+  }
+
+  function goHome() {
+    clearInterval(timerInterval);
+    currentSubject = "";
+    currentChapter = "";
+    document.getElementById("breadcrumb").innerHTML = "Select a Subject";
+    switchView("view-subjects");
+  }
+
+  // Step 1 -> Step 2: Open Subject & Render Chapters
+  function openSubject(subject) {
+    clearInterval(timerInterval);
+    currentSubject = subject;
+    currentChapter = "";
+    document.getElementById("selectedSubjectTitle").innerText = `${subject} Chapters`;
+    document.getElementById("chapterSearch").value = "";
+    document.getElementById("breadcrumb").innerHTML = `<button onclick="goHome()">Subjects</button> / <span>${subject}</span>`;
+    renderChapters(SYLLABUS[subject]);
+    switchView("view-chapters");
+  }
+
+  function renderChapters(list) {
+    const grid = document.getElementById("chapterGrid");
+    grid.innerHTML = "";
+    list.forEach(chap => {
+      const card = document.createElement("div");
+      card.className = "chapter-item";
+      card.onclick = () => startPractice(chap.name);
+      card.innerHTML = `
+        <div>
+          <div class="chap-name">${chap.name}</div>
+          <div class="chap-tag">${chap.class}</div>
+        </div>
+        <div class="chap-arrow">→</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function filterChapters() {
+    const query = document.getElementById("chapterSearch").value.toLowerCase();
+    const filtered = SYLLABUS[currentSubject].filter(c => c.name.toLowerCase().includes(query));
+    renderChapters(filtered);
+  }
+
+  // Step 2 -> Step 3: Start PYQ Practice for Chosen Chapter
+  function startPractice(chapter) {
+    currentChapter = chapter;
+    document.getElementById("breadcrumb").innerHTML = `
+      <button onclick="goHome()">Subjects</button> / 
+      <button onclick="openSubject('${currentSubject}')">${currentSubject}</button> / 
+      <span>${chapter}</span>
+    `;
+
+    // Load questions for this chapter (fallback sample if chapter has no DB rows yet)
+    activeQuestions = SAMPLE_QUESTIONS[chapter] || [
+      {
+        year: "Sample PYQ",
+        text: `Sample question placeholder for <strong>${chapter}</strong>. Once connected to Supabase in the next step, real ${chapter} PYQs will load automatically here.`,
+        options: ["Option A ($x = 1$)", "Option B ($x = 2$)", "Option C ($x = 3$)", "Option D ($x = 4$)"],
+        answer: 0
+      }
+    ];
+
+    // Reset session stats
+    qIndex = 0; score = 0; attempted = 0; correct = 0;
+    qSeconds = 0; totalSeconds = 0;
+    updateStatsUI();
+
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      totalSeconds++;
+      if (!answered) qSeconds++;
+      document.getElementById("qTimeVal").innerText = `${qSeconds}s`;
+      const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+      const s = String(totalSeconds % 60).padStart(2, "0");
+      document.getElementById("totTimeVal").innerText = `${m}:${s}`;
+    }, 1000);
+
+    renderQuestion();
+    switchView("view-practice");
+  }
+
+  function renderQuestion() {
+    answered = false;
+    qSeconds = 0;
+    const q = activeQuestions[qIndex];
+
+    document.getElementById("qNum").innerText = qIndex + 1;
+    document.getElementById("qTotal").innerText = activeQuestions.length;
+    document.getElementById("qMetaTag").innerText = `${currentSubject} • ${currentChapter} • ${q.year}`;
+    document.getElementById("qText").innerHTML = q.text;
+
+    const container = document.getElementById("optionsContainer");
+    container.innerHTML = "";
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.innerHTML = `<strong>(${String.fromCharCode(65 + idx)})</strong> <span>${opt}</span>`;
+      btn.onclick = () => selectOption(idx, btn);
+      container.appendChild(btn);
+    });
+
+    if (window.MathJax) MathJax.typesetPromise();
+  }
+
+  function selectOption(chosenIdx, btn) {
+    if (answered) return;
+    answered = true;
+    attempted++;
+
+    const correctIdx = activeQuestions[qIndex].answer;
+    const buttons = document.querySelectorAll(".option-btn");
+    buttons.forEach(b => b.disabled = true);
+
+    if (chosenIdx === correctIdx) {
+      btn.classList.add("correct");
+      score += 4;
+      correct++;
+    } else {
+      btn.classList.add("wrong");
+      buttons[correctIdx].classList.add("correct");
+      score -= 1;
+    }
+    updateStatsUI();
+  }
+
+  function updateStatsUI() {
+    document.getElementById("scoreVal").innerText = score;
+    const acc = attempted === 0 ? 0 : Math.round((correct / attempted) * 100);
+    document.getElementById("accVal").innerText = `${acc}%`;
+  }
+
+  function nextQuestion() {
+    qIndex = (qIndex + 1) % activeQuestions.length;
+    renderQuestion();
+  }
+</script>
+</body>
+</html>
