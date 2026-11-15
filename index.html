@@ -4,202 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JEE PYQ Arena</title>
-  <!-- MathJax for clean LaTeX equations -->
+  <link rel="stylesheet" href="style.css" />
   <script>
     window.MathJax = {
       tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] }
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-  <style>
-    :root {
-      --bg: #0b0e14;
-      --surface: #131722;
-      --surface-hover: #1b2131;
-      --border: #252c3f;
-      --text: #eef1f8;
-      --muted: #8b95b0;
-      --phy: #3b82f6;
-      --chem: #10b981;
-      --math: #f59e0b;
-      --accent: #6366f1;
-      --green: #22c55e;
-      --red: #ef4444;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 24px 20px; overflow-x: hidden; }
-    .app { width: 100%; max-width: 1000px; }
-
-    /* Header & Breadcrumbs */
-    header {
-      display: flex; justify-content: space-between; align-items: center; gap: 16px;
-      padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 28px;
-    }
-    .header-left { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; cursor: pointer; }
-    .brand span { color: var(--accent); }
-    .breadcrumb { font-size: 0.9rem; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .breadcrumb button { background: none; border: none; color: var(--accent); cursor: pointer; font-weight: 600; font-size: 0.9rem; }
-    .breadcrumb button:hover { text-decoration: underline; }
-
-    /* "Items" Taskbar Trigger Button */
-    .items-toggle-btn {
-      background: var(--surface); border: 1px solid var(--border); color: var(--text);
-      padding: 10px 18px; border-radius: 9px; font-weight: 600; font-size: 0.95rem;
-      cursor: pointer; transition: 0.15s; display: flex; align-items: center; gap: 8px;
-    }
-    .items-toggle-btn:hover { border-color: var(--accent); background: var(--surface-hover); }
-
-    /* Slide-Out Side Taskbar (Drawer) */
-    .drawer-backdrop {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      display: none; z-index: 900;
-    }
-    .drawer-backdrop.open { display: block; }
-
-    .side-taskbar {
-      position: fixed; top: 0; right: -360px; width: 340px; max-width: 88vw; height: 100vh;
-      background: var(--surface); border-left: 1px solid var(--border);
-      transition: right 0.25s ease;
-      z-index: 1000; display: flex; flex-direction: column; padding: 22px 20px;
-      box-shadow: -8px 0 30px rgba(0,0,0,0.5);
-    }
-    .side-taskbar.open { right: 0; }
-    .drawer-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
-    }
-    .drawer-title { font-size: 1.15rem; font-weight: 700; }
-    .drawer-close {
-      background: #1e2436; border: 1px solid var(--border); color: var(--text);
-      width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 1rem;
-    }
-    .drawer-close:hover { border-color: var(--accent); }
-    .drawer-empty {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      text-align: center; color: var(--muted); font-size: 0.92rem;
-      border: 1px dashed var(--border); border-radius: 12px; padding: 24px;
-    }
-
-    /* View Containers */
-    .view { display: none; }
-    .view.active { display: block; }
-
-    .hero-title { font-size: 1.75rem; font-weight: 700; margin-bottom: 6px; }
-    .hero-sub { color: var(--muted); margin-bottom: 24px; }
-
-    /* Custom Horizontal Scrollbar for wide cells */
-    .h-scroll::-webkit-scrollbar { height: 6px; }
-    .h-scroll::-webkit-scrollbar-track { background: transparent; }
-    .h-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-    .h-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-    /* Vertical List Layout (Subjects & Chapters stacked vertically, no serial numbers) */
-    .vertical-list {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      width: 100%;
-    }
-
-    /* Subject Row Cell (Full width, horizontally scrollable inside if text is long) */
-    .subject-cell {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px 28px;
-      cursor: pointer;
-      transition: 0.18s;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-    .subject-cell:hover { background: var(--surface-hover); transform: translateX(4px); }
-    .subject-cell.phy:hover { border-color: var(--phy); }
-    .subject-cell.chem:hover { border-color: var(--chem); }
-    .subject-cell.math:hover { border-color: var(--math); }
-
-    .sub-left { display: flex; align-items: center; gap: 20px; min-width: max-content; }
-    .sub-badge {
-      width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
-      font-size: 1.4rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
-    }
-    .phy .sub-badge { background: rgba(59, 130, 246, 0.15); color: var(--phy); }
-    .chem .sub-badge { background: rgba(16, 185, 129, 0.15); color: var(--chem); }
-    .math .sub-badge { background: rgba(245, 158, 11, 0.15); color: var(--math); }
-
-    .sub-info h2 { font-size: 1.35rem; margin-bottom: 4px; }
-    .sub-info p { color: var(--muted); font-size: 0.95rem; }
-    .cell-arrow { color: var(--muted); font-size: 1.25rem; font-weight: 700; flex-shrink: 0; }
-
-    /* Step 2: Chapter Vertical List (Wide cells, horizontally scrollable inside) */
-    .chapter-controls { display: flex; gap: 12px; margin-bottom: 20px; width: 100%; }
-    .search-input {
-      width: 100%; padding: 14px 18px; border-radius: 10px;
-      background: var(--surface); border: 1px solid var(--border); color: var(--text); font-size: 0.95rem;
-    }
-    .search-input:focus { outline: none; border-color: var(--accent); }
-
-    .chapter-cell {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px 24px;
-      cursor: pointer;
-      transition: 0.15s;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 24px;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-    .chapter-cell:hover { background: var(--surface-hover); border-color: var(--accent); transform: translateX(4px); }
-    .chap-left { display: flex; align-items: center; gap: 16px; min-width: max-content; }
-    .chap-name { font-weight: 600; font-size: 1.05rem; }
-    .chap-tag {
-      font-size: 0.8rem; color: var(--muted); background: #1a2030;
-      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border);
-    }
-
-    /* Step 3: Practice Arena */
-    .stats-bar {
-      display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center;
-      background: var(--surface); border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; margin-bottom: 18px;
-    }
-    .stat-group { display: flex; gap: 20px; font-size: 0.95rem; font-weight: 600; flex-wrap: wrap; }
-    .stat-group span { color: var(--accent); }
-    .q-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px; }
-    .q-meta { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
-    .q-body { font-size: 1.12rem; line-height: 1.65; margin-bottom: 22px; overflow-x: auto; }
-    .options-list { display: grid; gap: 12px; }
-    .option-btn {
-      width: 100%; text-align: left; padding: 14px 18px; border-radius: 10px;
-      background: #181d2b; border: 1px solid var(--border); color: var(--text);
-      font-size: 1rem; cursor: pointer; transition: 0.15s; display: flex; gap: 12px; align-items: center;
-    }
-    .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #1f2638; }
-    .option-btn.correct { border-color: var(--green); background: rgba(34, 197, 94, 0.15); }
-    .option-btn.wrong { border-color: var(--red); background: rgba(239, 68, 68, 0.15); }
-    .q-footer { display: flex; justify-content: space-between; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); }
-    .btn {
-      padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 0.95rem;
-    }
-    .btn-primary { background: var(--accent); color: white; }
-    .btn-secondary { background: #22293a; color: var(--text); }
-  </style>
 </head>
 <body>
 
 <div class="app">
-  <!-- Top Navigation -->
   <header>
     <div class="header-left">
       <div class="brand" onclick="goHome()">JEE<span>PYQ</span></div>
@@ -208,7 +23,7 @@
     <button type="button" class="items-toggle-btn" id="itemsBtn">☰ Items</button>
   </header>
 
-  <!-- VIEW 1: SUBJECT SELECTION (Vertical List, Wide Cells) -->
+  <!-- VIEW 1: SUBJECT SELECTION (Vertical List, Wide Horizontally Scrollable Cells) -->
   <section id="view-subjects" class="view active">
     <h1 class="hero-title">Choose Your Subject</h1>
     <p class="hero-sub">Select a subject below to view all chapters.</p>
@@ -249,19 +64,17 @@
     </div>
   </section>
 
-  <!-- VIEW 2: CHAPTER SELECTION (Vertical List, No Serial Numbers, Wide Cells) -->
+  <!-- VIEW 2: CHAPTER SELECTION -->
   <section id="view-chapters" class="view">
-    <h1 class="hero-title" id="selectedSubjectTitle">Physics Chapters</h1>
+    <h1 class="hero-title" id="selectedSubjectTitle">Chapters</h1>
     <p class="hero-sub">Click any chapter to start PYQ practice.</p>
-
     <div class="chapter-controls">
-      <input type="text" id="chapterSearch" class="search-input" placeholder="Search chapters (e.g., Rotational, Electrostatics, Calculus)..." oninput="filterChapters()" />
+      <input type="text" id="chapterSearch" class="search-input" placeholder="Search chapters..." oninput="filterChapters()" />
     </div>
-
     <div class="vertical-list" id="chapterList"></div>
   </section>
 
-  <!-- VIEW 3: PYQ PRACTICE ARENA -->
+  <!-- VIEW 3: PRACTICE ARENA -->
   <section id="view-practice" class="view">
     <div class="stats-bar">
       <div class="stat-group">
@@ -270,19 +83,16 @@
         <div>Q-Time: <span id="qTimeVal">0s</span></div>
         <div>Total: <span id="totTimeVal">00:00</span></div>
       </div>
-      <div style="color: var(--muted); font-size: 0.9rem;">
-        Q <span id="qNum">1</span> / <span id="qTotal">1</span>
-      </div>
+      <div class="q-counter">Q <span id="qNum">1</span> / <span id="qTotal">1</span></div>
     </div>
 
     <div class="q-card">
       <div class="q-meta">
-        <span id="qMetaTag">Physics • Chapter</span>
+        <span id="qMetaTag">Subject • Chapter</span>
         <span>Marking: +4 / -1</span>
       </div>
       <div class="q-body" id="qText">Loading question...</div>
       <div class="options-list" id="optionsContainer"></div>
-
       <div class="q-footer">
         <button class="btn btn-secondary" onclick="openSubject(currentSubject)">← Change Chapter</button>
         <button class="btn btn-primary" onclick="nextQuestion()">Next Question →</button>
@@ -291,311 +101,17 @@
   </section>
 </div>
 
-<!-- Slide-Out Empty Side Taskbar Drawer -->
+<!-- Slide-Out Empty Side Taskbar -->
 <div class="drawer-backdrop" id="drawerBackdrop"></div>
 <aside class="side-taskbar" id="sideTaskbar">
   <div class="drawer-header">
     <span class="drawer-title">Items</span>
     <button type="button" class="drawer-close" id="closeDrawerBtn">✕</button>
   </div>
-  <div class="drawer-empty">
-    Empty side taskbar — items will be added here later.
-  </div>
+  <div class="drawer-empty">Empty side taskbar — items will be added here later.</div>
 </aside>
 
-<script>
-  // ============================================================================
-  // PASTE YOUR SUPABASE URL AND PUBLISHABLE / ANON KEY HERE:
-  // ============================================================================
-  const SUPABASE_URL = "https://ifmcgtgezreraurgqvrq.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_gdypwAeataBE0jhwBcIXxw_ynUOFOm7";
-
-  // Side Taskbar Toggle Logic
-  const sideTaskbar = document.getElementById("sideTaskbar");
-  const drawerBackdrop = document.getElementById("drawerBackdrop");
-
-  function toggleTaskbar() {
-    sideTaskbar.classList.toggle("open");
-    drawerBackdrop.classList.toggle("open");
-  }
-
-  document.getElementById("itemsBtn").addEventListener("click", toggleTaskbar);
-  document.getElementById("closeDrawerBtn").addEventListener("click", toggleTaskbar);
-  drawerBackdrop.addEventListener("click", toggleTaskbar);
-
-  // Official JEE Main / Advanced Syllabus (No serial numbers)
-  const SYLLABUS = {
-    Physics: [
-      { name: "Units and Measurements", class: "Class 11 • Mechanics" },
-      { name: "Kinematics", class: "Class 11 • Mechanics" },
-      { name: "Laws of Motion", class: "Class 11 • Mechanics" },
-      { name: "Work, Energy and Power", class: "Class 11 • Mechanics" },
-      { name: "Rotational Motion", class: "Class 11 • Mechanics" },
-      { name: "Gravitation", class: "Class 11 • Mechanics" },
-      { name: "Properties of Solids and Liquids", class: "Class 11 • Matter" },
-      { name: "Thermodynamics", class: "Class 11 • Thermal Physics" },
-      { name: "Kinetic Theory of Gases", class: "Class 11 • Thermal Physics" },
-      { name: "Oscillations and Waves", class: "Class 11 • Waves" },
-      { name: "Electrostatics", class: "Class 12 • Electrodynamics" },
-      { name: "Current Electricity", class: "Class 12 • Electrodynamics" },
-      { name: "Magnetic Effects of Current and Magnetism", class: "Class 12 • Electrodynamics" },
-      { name: "Electromagnetic Induction and Alternating Currents", class: "Class 12 • Electrodynamics" },
-      { name: "Electromagnetic Waves", class: "Class 12 • Electrodynamics" },
-      { name: "Optics (Ray & Wave)", class: "Class 12 • Optics" },
-      { name: "Dual Nature of Matter and Radiation", class: "Class 12 • Modern Physics" },
-      { name: "Atoms and Nuclei", class: "Class 12 • Modern Physics" },
-      { name: "Electronic Devices", class: "Class 12 • Semiconductors" },
-      { name: "Experimental Skills", class: "Class 11 & 12 • Practical" }
-    ],
-    Chemistry: [
-      { name: "Some Basic Concepts in Chemistry", class: "Physical • Class 11" },
-      { name: "Atomic Structure", class: "Physical • Class 11" },
-      { name: "Chemical Bonding and Molecular Structure", class: "Inorganic • Class 11" },
-      { name: "Chemical Thermodynamics", class: "Physical • Class 11" },
-      { name: "Solutions", class: "Physical • Class 12" },
-      { name: "Equilibrium", class: "Physical • Class 11" },
-      { name: "Redox Reactions and Electrochemistry", class: "Physical • Class 11 & 12" },
-      { name: "Chemical Kinetics", class: "Physical • Class 12" },
-      { name: "Classification of Elements and Periodicity", class: "Inorganic • Class 11" },
-      { name: "p-Block Elements", class: "Inorganic • Class 11 & 12" },
-      { name: "d- and f-Block Elements", class: "Inorganic • Class 12" },
-      { name: "Coordination Compounds", class: "Inorganic • Class 12" },
-      { name: "Purification and Characterisation of Organic Compounds", class: "Organic • Class 11" },
-      { name: "Some Basic Principles of Organic Chemistry (GOC)", class: "Organic • Class 11" },
-      { name: "Hydrocarbons", class: "Organic • Class 11" },
-      { name: "Organic Compounds Containing Halogens", class: "Organic • Class 12" },
-      { name: "Organic Compounds Containing Oxygen", class: "Organic • Class 12" },
-      { name: "Organic Compounds Containing Nitrogen", class: "Organic • Class 12" },
-      { name: "Biomolecules", class: "Organic • Class 12" },
-      { name: "Principles Related to Practical Chemistry", class: "Practical • Class 11 & 12" }
-    ],
-    Mathematics: [
-      { name: "Sets, Relations and Functions", class: "Class 11 & 12 • Algebra" },
-      { name: "Complex Numbers and Quadratic Equations", class: "Class 11 • Algebra" },
-      { name: "Matrices and Determinants", class: "Class 12 • Algebra" },
-      { name: "Permutations and Combinations", class: "Class 11 • Algebra" },
-      { name: "Binomial Theorem and its Simple Applications", class: "Class 11 • Algebra" },
-      { name: "Sequence and Series", class: "Class 11 • Algebra" },
-      { name: "Limit, Continuity and Differentiability", class: "Class 11 & 12 • Calculus" },
-      { name: "Integral Calculus", class: "Class 12 • Calculus" },
-      { name: "Differential Equations", class: "Class 12 • Calculus" },
-      { name: "Co-ordinate Geometry", class: "Class 11 • Geometry" },
-      { name: "Three Dimensional Geometry", class: "Class 12 • Geometry" },
-      { name: "Vector Algebra", class: "Class 12 • Vectors" },
-      { name: "Statistics and Probability", class: "Class 11 & 12 • Probability" },
-      { name: "Trigonometry", class: "Class 11 & 12 • Trigonometry" }
-    ]
-  };
-
-  const SAMPLE_QUESTIONS = {
-    "Rotational Motion": [
-      {
-        year: "JEE Main 2024",
-        text: "A solid sphere of mass $M$ and radius $R$ rolls without slipping down an inclined plane of inclination $\\theta$. What is the linear acceleration of its center of mass?",
-        options: ["$\\frac{5}{7}g\\sin\\theta$", "$\\frac{2}{5}g\\sin\\theta$", "$\\frac{1}{2}g\\sin\\theta$", "$g\\sin\\theta$"],
-        answer: 0
-      }
-    ]
-  };
-
-  let currentSubject = "";
-  let currentChapter = "";
-  let activeQuestions = [];
-  let qIndex = 0;
-  let score = 0, attempted = 0, correct = 0;
-  let qSeconds = 0, totalSeconds = 0;
-  let timerInterval = null;
-  let answered = false;
-
-  function switchView(viewId) {
-    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-    document.getElementById(viewId).classList.add("active");
-  }
-
-  function goHome() {
-    clearInterval(timerInterval);
-    currentSubject = "";
-    currentChapter = "";
-    document.getElementById("breadcrumb").innerHTML = "Select a Subject";
-    switchView("view-subjects");
-  }
-
-  function openSubject(subject) {
-    clearInterval(timerInterval);
-    currentSubject = subject;
-    currentChapter = "";
-    document.getElementById("selectedSubjectTitle").innerText = `${subject} Chapters`;
-    document.getElementById("chapterSearch").value = "";
-    document.getElementById("breadcrumb").innerHTML = `<button onclick="goHome()">Subjects</button> / <span>${subject}</span>`;
-    renderChapters(SYLLABUS[subject]);
-    switchView("view-chapters");
-  }
-
-  function renderChapters(list) {
-    const container = document.getElementById("chapterList");
-    container.innerHTML = "";
-    list.forEach(chap => {
-      const row = document.createElement("div");
-      row.className = "chapter-cell h-scroll";
-      row.onclick = () => startPractice(chap.name);
-      row.innerHTML = `
-        <div class="chap-left">
-          <span class="chap-name">${chap.name}</span>
-          <span class="chap-tag">${chap.class}</span>
-        </div>
-        <div class="cell-arrow">→</div>
-      `;
-      container.appendChild(row);
-    });
-  }
-
-  function filterChapters() {
-    const query = document.getElementById("chapterSearch").value.toLowerCase();
-    const filtered = SYLLABUS[currentSubject].filter(c => c.name.toLowerCase().includes(query));
-    renderChapters(filtered);
-  }
-
-  async function startPractice(chapter) {
-    currentChapter = chapter;
-    document.getElementById("breadcrumb").innerHTML = `
-      <button onclick="goHome()">Subjects</button> / 
-      <button onclick="openSubject('${currentSubject}')">${currentSubject}</button> / 
-      <span>${chapter}</span>
-    `;
-
-    switchView("view-practice");
-    document.getElementById("qText").innerHTML = `Fetching <strong>${chapter}</strong> PYQs from Supabase...`;
-    document.getElementById("optionsContainer").innerHTML = "";
-
-    const cleanUrl = SUPABASE_URL.trim().replace(/\/$/, "");
-    const cleanKey = SUPABASE_ANON_KEY.trim();
-
-    if (!cleanUrl.startsWith("http") || cleanKey.includes("PASTE_YOUR")) {
-      activeQuestions = SAMPLE_QUESTIONS[chapter] || [{
-        year: "Setup Needed",
-        text: `Paste your <strong>SUPABASE_URL</strong> and <strong>SUPABASE_ANON_KEY</strong> inside <code>index.html</code> to load live questions from Supabase for <strong>${chapter}</strong>.`,
-        options: ["Option A", "Option B", "Option C", "Option D"],
-        answer: 0
-      }];
-    } else {
-      try {
-        const endpoint = `${cleanUrl}/rest/v1/questions?subject=eq.${encodeURIComponent(currentSubject)}&chapter=eq.${encodeURIComponent(chapter)}&select=*`;
-        const res = await fetch(endpoint, {
-          headers: {
-            "apikey": cleanKey,
-            "Authorization": `Bearer ${cleanKey}`,
-            "Content-Type": "application/json"
-          }
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
-
-        const rows = await res.json();
-
-        if (Array.isArray(rows) && rows.length > 0) {
-          activeQuestions = rows.map(r => ({
-            id: r.id,
-            year: r.exam_year || "PYQ",
-            text: r.question_text,
-            image: r.image_url,
-            options: typeof r.options === "string" ? JSON.parse(r.options) : r.options,
-            answer: Number(r.correct_answer),
-            solution: r.solution_steps
-          }));
-        } else {
-          activeQuestions = SAMPLE_QUESTIONS[chapter] || [{
-            year: "Empty Chapter",
-            text: `Connected to Supabase! No questions uploaded for <strong>${chapter}</strong> in the database yet.`,
-            options: ["Option A", "Option B", "Option C", "Option D"],
-            answer: 0
-          }];
-        }
-      } catch (err) {
-        activeQuestions = [{
-          year: "Connection Error",
-          text: `Could not reach Supabase: <code>${err.message}</code>.`,
-          options: ["Retry", "-", "-", "-"],
-          answer: 0
-        }];
-      }
-    }
-
-    qIndex = 0; score = 0; attempted = 0; correct = 0;
-    qSeconds = 0; totalSeconds = 0;
-    updateStatsUI();
-
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-      totalSeconds++;
-      if (!answered) qSeconds++;
-      document.getElementById("qTimeVal").innerText = `${qSeconds}s`;
-      const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-      const s = String(totalSeconds % 60).padStart(2, "0");
-      document.getElementById("totTimeVal").innerText = `${m}:${s}`;
-    }, 1000);
-
-    renderQuestion();
-  }
-
-  function renderQuestion() {
-    answered = false;
-    qSeconds = 0;
-    const q = activeQuestions[qIndex];
-
-    document.getElementById("qNum").innerText = qIndex + 1;
-    document.getElementById("qTotal").innerText = activeQuestions.length;
-    document.getElementById("qMetaTag").innerText = `${currentSubject} • ${currentChapter} • ${q.year}`;
-    document.getElementById("qText").innerHTML = q.text + (q.image ? `<br><img src="${q.image}" style="max-width:100%;margin-top:12px;border-radius:8px;">` : "");
-
-    const container = document.getElementById("optionsContainer");
-    container.innerHTML = "";
-    q.options.forEach((opt, idx) => {
-      const btn = document.createElement("button");
-      btn.className = "option-btn";
-      btn.innerHTML = `<strong>(${String.fromCharCode(65 + idx)})</strong> <span>${opt}</span>`;
-      btn.onclick = () => selectOption(idx, btn);
-      container.appendChild(btn);
-    });
-
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise();
-    }
-  }
-
-  function selectOption(chosenIdx, btn) {
-    if (answered) return;
-    answered = true;
-    attempted++;
-
-    const correctIdx = activeQuestions[qIndex].answer;
-    const buttons = document.querySelectorAll(".option-btn");
-    buttons.forEach(b => b.disabled = true);
-
-    if (chosenIdx === correctIdx) {
-      btn.classList.add("correct");
-      score += 4;
-      correct++;
-    } else {
-      btn.classList.add("wrong");
-      if (buttons[correctIdx]) buttons[correctIdx].classList.add("correct");
-      score -= 1;
-    }
-    updateStatsUI();
-  }
-
-  function updateStatsUI() {
-    document.getElementById("scoreVal").innerText = score;
-    const acc = attempted === 0 ? 0 : Math.round((correct / attempted) * 100);
-    document.getElementById("accVal").innerText = `${acc}%`;
-  }
-
-  function nextQuestion() {
-    qIndex = (qIndex + 1) % activeQuestions.length;
-    renderQuestion();
-  }
-</script>
+<script src="syllabus.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
