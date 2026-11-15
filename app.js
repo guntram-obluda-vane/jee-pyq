@@ -1,4 +1,4 @@
-//Drawer Toggle
+// Drawer Toggle
 const sideTaskbar = document.getElementById("sideTaskbar");
 const drawerBackdrop = document.getElementById("drawerBackdrop");
 function toggleTaskbar() {
