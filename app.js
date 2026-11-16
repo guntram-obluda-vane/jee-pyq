@@ -285,4 +285,4 @@ function nextQuestion() {
   if (!activeQuestions || activeQuestions.length === 0) return;
   qIndex = (qIndex + 1) % activeQuestions.length;
   renderQuestion();
-}.
+}
