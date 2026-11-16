@@ -16,6 +16,46 @@ let activeQuestions = [];
 let qIndex = 0, score = 0, attempted = 0, correct = 0;
 let qSeconds = 0, totalSeconds = 0, timerInterval = null, answered = false;
 
+// Maps syllabus.js chapter names -> possible Hugging Face chapter tags in Supabase
+const DB_CHAPTER_ALIASES = {
+  "Units and Measurements": ["Units and Measurements", "Units & Measurements", "Physics and Measurement", "Measurement"],
+  "Electronic Devices": ["Electronic Devices", "electronic device", "Semiconductors", "Semiconductor"],
+  "Optics (Ray & Wave)": ["Optics (Ray & Wave)", "Optics", "Ray Optics", "Wave Optics"],
+  "Magnetic Effects of Current and Magnetism": ["Magnetic Effects of Current and Magnetism", "Magnetism", "Magnetic Effect"],
+  "Electromagnetic Induction and Alternating Currents": ["Electromagnetic Induction and Alternating Currents", "Electromagnetic Induction", "Alternating Current", "EMI"],
+  "Properties of Solids and Liquids": ["Properties of Solids and Liquids", "Fluid Mechanics", "Properties of Matter", "Elasticity"],
+  "Dual Nature of Matter and Radiation": ["Dual Nature of Matter and Radiation", "Dual Nature", "Modern Physics"],
+  "Atoms and Nuclei": ["Atoms and Nuclei", "Modern Physics", "Atomic Physics", "Nuclear Physics"],
+  "Oscillations and Waves": ["Oscillations and Waves", "Oscillations", "Waves", "SHM"],
+  // Chemistry broad tags fallback
+  "Some Basic Concepts in Chemistry": ["Some Basic Concepts in Chemistry", "Mole Concept", "Physical Chemistry"],
+  "Atomic Structure": ["Atomic Structure", "Structure of Atom", "Physical Chemistry"],
+  "Chemical Thermodynamics": ["Chemical Thermodynamics", "Thermodynamics", "Physical Chemistry"],
+  "Solutions": ["Solutions", "Solution", "Physical Chemistry"],
+  "Equilibrium": ["Equilibrium", "Chemical Equilibrium", "Ionic Equilibrium", "Physical Chemistry"],
+  "Redox Reactions and Electrochemistry": ["Redox Reactions and Electrochemistry", "Electrochemistry", "Redox", "Physical Chemistry"],
+  "Chemical Kinetics": ["Chemical Kinetics", "Physical Chemistry"],
+  "Chemical Bonding and Molecular Structure": ["Chemical Bonding and Molecular Structure", "Chemical Bonding", "Inorganic Chemistry"],
+  "Classification of Elements and Periodicity": ["Classification of Elements and Periodicity", "Periodic Table", "Periodicity", "Inorganic Chemistry"],
+  "p-Block Elements": ["p-Block Elements", "p-Block", "Inorganic Chemistry"],
+  "d- and f-Block Elements": ["d- and f-Block Elements", "d and f Block", "Coordination", "Inorganic Chemistry"],
+  "Coordination Compounds": ["Coordination Compounds", "Inorganic Chemistry"],
+  "Some Basic Principles of Organic Chemistry (GOC)": ["Some Basic Principles of Organic Chemistry (GOC)", "General Organic Chemistry", "GOC", "Organic Chemistry"],
+  "Hydrocarbons": ["Hydrocarbons", "Organic Chemistry"],
+  "Organic Compounds Containing Halogens": ["Organic Compounds Containing Halogens", "Haloalkanes", "Organic Chemistry"],
+  "Organic Compounds Containing Oxygen": ["Organic Compounds Containing Oxygen", "Alcohols", "Aldehydes", "Organic Chemistry"],
+  "Organic Compounds Containing Nitrogen": ["Organic Compounds Containing Nitrogen", "Amines", "Organic Chemistry"],
+  "Biomolecules": ["Biomolecules", "Organic Chemistry"],
+  // Math aliases
+  "Sets, Relations and Functions": ["Sets, Relations and Functions", "Functions", "Sets and Relations", "Calculus"],
+  "Complex Numbers and Quadratic Equations": ["Complex Numbers and Quadratic Equations", "Complex Numbers", "Quadratic Equations", "Algebra"],
+  "Limit, Continuity and Differentiability": ["Limit, Continuity and Differentiability", "Limits", "Continuity", "Differentiability", "Differential Calculus"],
+  "Integral Calculus": ["Integral Calculus", "Integration", "Definite Integration", "Indefinite Integration"],
+  "Co-ordinate Geometry": ["Co-ordinate Geometry", "Coordinate Geometry", "Straight Lines", "Circles", "Conic Sections"],
+  "Three Dimensional Geometry": ["Three Dimensional Geometry", "3D Geometry", "Vector and 3D"],
+  "Statistics and Probability": ["Statistics and Probability", "Probability", "Statistics"]
+};
+
 function switchView(viewId) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById(viewId).classList.add("active");
@@ -40,10 +80,24 @@ function openSubject(subject) {
 function renderChapters(list) {
   const container = document.getElementById("chapterList");
   container.innerHTML = "";
+
+  // Add an "All PYQs" option at the top so every single question in the subject is accessible
+  const allRow = document.createElement("div");
+  allRow.className = "chapter-cell h-scroll";
+  allRow.onclick = () => startPractice(`All ${currentSubject} PYQs`, true);
+  allRow.innerHTML = `
+    <div class="chap-left">
+      <span class="chap-name">All ${currentSubject} PYQs (Mixed Practice)</span>
+      <span class="chap-tag">Full Subject Question Bank</span>
+    </div>
+    <div class="cell-arrow">→</div>
+  `;
+  container.appendChild(allRow);
+
   list.forEach(chap => {
     const row = document.createElement("div");
     row.className = "chapter-cell h-scroll";
-    row.onclick = () => startPractice(chap.name);
+    row.onclick = () => startPractice(chap.name, false);
     row.innerHTML = `
       <div class="chap-left">
         <span class="chap-name">${chap.name}</span>
@@ -60,7 +114,7 @@ function filterChapters() {
   renderChapters(SYLLABUS[currentSubject].filter(c => c.name.toLowerCase().includes(q)));
 }
 
-async function startPractice(chapter) {
+async function startPractice(chapter, fetchAll = false) {
   currentChapter = chapter;
   document.getElementById("breadcrumb").innerHTML = `
     <button onclick="goHome()">Subjects</button> / 
@@ -76,7 +130,17 @@ async function startPractice(chapter) {
   const cleanKey = SUPABASE_ANON_KEY.trim();
 
   try {
-    const endpoint = `${cleanUrl}/rest/v1/questions?subject=eq.${encodeURIComponent(currentSubject)}&chapter=eq.${encodeURIComponent(chapter)}&select=*`;
+    let endpoint = `${cleanUrl}/rest/v1/questions?subject=eq.${encodeURIComponent(currentSubject)}&select=*`;
+
+    if (!fetchAll) {
+      const aliases = DB_CHAPTER_ALIASES[chapter] || [chapter];
+      const shortCore = chapter.replace(/s$/i, "").split("(")[0].trim();
+      const filters = [...new Set([...aliases, shortCore])]
+        .map(tag => `chapter.ilike.*${encodeURIComponent(tag)}*`)
+        .join(",");
+      endpoint += `&or=(${filters})`;
+    }
+
     const res = await fetch(endpoint, {
       headers: { "apikey": cleanKey, "Authorization": `Bearer ${cleanKey}` }
     });
@@ -86,6 +150,7 @@ async function startPractice(chapter) {
       activeQuestions = rows.map(r => ({
         id: r.id,
         year: r.exam_year || "PYQ",
+        dbChapter: r.chapter || chapter,
         text: r.question_text,
         image: r.image_url,
         options: typeof r.options === "string" ? JSON.parse(r.options) : r.options,
@@ -95,7 +160,7 @@ async function startPractice(chapter) {
     } else {
       activeQuestions = [{
         year: "Empty Chapter",
-        text: `Connected to Supabase! No questions uploaded for <strong>${chapter}</strong> yet.`,
+        text: `Connected to Supabase! No questions found matching <strong>${chapter}</strong> yet. Try <strong>All ${currentSubject} PYQs</strong> at the top of the chapter list.`,
         options: ["Option A", "Option B", "Option C", "Option D"],
         answer: 0
       }];
@@ -130,7 +195,7 @@ function renderQuestion() {
   const q = activeQuestions[qIndex];
   document.getElementById("qNum").innerText = qIndex + 1;
   document.getElementById("qTotal").innerText = activeQuestions.length;
-  document.getElementById("qMetaTag").innerText = `${currentSubject} • ${currentChapter} • ${q.year}`;
+  document.getElementById("qMetaTag").innerText = `${currentSubject} • ${q.dbChapter || currentChapter} • ${q.year}`;
   document.getElementById("qText").innerHTML = q.text + (q.image ? `<br><img src="${q.image}" style="max-width:100%;margin-top:12px;border-radius:8px;">` : "");
 
   const container = document.getElementById("optionsContainer");
