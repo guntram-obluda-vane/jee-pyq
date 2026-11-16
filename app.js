@@ -9,16 +9,18 @@ document.getElementById("itemsBtn").addEventListener("click", toggleTaskbar);
 document.getElementById("closeDrawerBtn").addEventListener("click", toggleTaskbar);
 drawerBackdrop.addEventListener("click", toggleTaskbar);
 
-// State
+// State & Cache
 let currentSubject = "";
 let currentChapter = "";
 let activeQuestions = [];
+let subjectCache = {}; // Caches fetched questions per subject for instant chapter switching
 let qIndex = 0, score = 0, attempted = 0, correct = 0;
 let qSeconds = 0, totalSeconds = 0, timerInterval = null, answered = false;
 
 // Maps syllabus.js chapter names -> possible Hugging Face chapter tags in Supabase
 const DB_CHAPTER_ALIASES = {
   "Units and Measurements": ["Units and Measurements", "Units & Measurements", "Physics and Measurement", "Measurement"],
+  "Work, Energy and Power": ["Work, Energy and Power", "Work Energy and Power", "Work, Power and Energy"],
   "Electronic Devices": ["Electronic Devices", "electronic device", "Semiconductors", "Semiconductor"],
   "Optics (Ray & Wave)": ["Optics (Ray & Wave)", "Optics", "Ray Optics", "Wave Optics"],
   "Magnetic Effects of Current and Magnetism": ["Magnetic Effects of Current and Magnetism", "Magnetism", "Magnetic Effect"],
@@ -81,7 +83,6 @@ function renderChapters(list) {
   const container = document.getElementById("chapterList");
   container.innerHTML = "";
 
-  // Add an "All PYQs" option at the top so every single question in the subject is accessible
   const allRow = document.createElement("div");
   allRow.className = "chapter-cell h-scroll";
   allRow.onclick = () => startPractice(`All ${currentSubject} PYQs`, true);
@@ -114,6 +115,16 @@ function filterChapters() {
   renderChapters(SYLLABUS[currentSubject].filter(c => c.name.toLowerCase().includes(q)));
 }
 
+// Normalizes punctuation/case so "Work, Energy and Power" matches "Work Energy & Power"
+function normalizeText(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 async function startPractice(chapter, fetchAll = false) {
   currentChapter = chapter;
   document.getElementById("breadcrumb").innerHTML = `
@@ -130,23 +141,34 @@ async function startPractice(chapter, fetchAll = false) {
   const cleanKey = SUPABASE_ANON_KEY.trim();
 
   try {
-    let endpoint = `${cleanUrl}/rest/v1/questions?subject=eq.${encodeURIComponent(currentSubject)}&select=*`;
+    // Fetch subject rows once and cache in memory (avoids PostgREST comma/symbol URL bugs)
+    if (!subjectCache[currentSubject]) {
+      const endpoint = `${cleanUrl}/rest/v1/questions?subject=eq.${encodeURIComponent(currentSubject)}&select=*`;
+      const res = await fetch(endpoint, {
+        headers: { "apikey": cleanKey, "Authorization": `Bearer ${cleanKey}` }
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status} (${res.statusText})`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid response format from Supabase");
+      subjectCache[currentSubject] = data;
+    }
+
+    let rows = subjectCache[currentSubject];
 
     if (!fetchAll) {
       const aliases = DB_CHAPTER_ALIASES[chapter] || [chapter];
       const shortCore = chapter.replace(/s$/i, "").split("(")[0].trim();
-      const filters = [...new Set([...aliases, shortCore])]
-        .map(tag => `chapter.ilike.*${encodeURIComponent(tag)}*`)
-        .join(",");
-      endpoint += `&or=(${filters})`;
+      const targetTerms = [...new Set([...aliases, shortCore])]
+        .map(normalizeText)
+        .filter(Boolean);
+
+      rows = rows.filter(r => {
+        const dbChap = normalizeText(r.chapter);
+        return targetTerms.some(term => dbChap.includes(term) || term.includes(dbChap));
+      });
     }
 
-    const res = await fetch(endpoint, {
-      headers: { "apikey": cleanKey, "Authorization": `Bearer ${cleanKey}` }
-    });
-    const rows = await res.json();
-
-    if (Array.isArray(rows) && rows.length > 0) {
+    if (rows.length > 0) {
       activeQuestions = rows.map(r => ({
         id: r.id,
         year: r.exam_year || "PYQ",
@@ -189,6 +211,17 @@ async function startPractice(chapter, fetchAll = false) {
   renderQuestion();
 }
 
+function attachImageFallbacks(rootEl) {
+  rootEl.querySelectorAll("img").forEach(img => {
+    img.onerror = () => {
+      const note = document.createElement("span");
+      note.style.cssText = "display:inline-block;padding:4px 8px;margin:6px 0;font-size:0.85em;background:rgba(255,255,255,0.08);border-radius:4px;color:#aaa;";
+      note.innerText = "[Diagram unavailable in text dataset]";
+      img.replaceWith(note);
+    };
+  });
+}
+
 function renderQuestion() {
   answered = false;
   qSeconds = 0;
@@ -196,7 +229,10 @@ function renderQuestion() {
   document.getElementById("qNum").innerText = qIndex + 1;
   document.getElementById("qTotal").innerText = activeQuestions.length;
   document.getElementById("qMetaTag").innerText = `${currentSubject} • ${q.dbChapter || currentChapter} • ${q.year}`;
-  document.getElementById("qText").innerHTML = q.text + (q.image ? `<br><img src="${q.image}" style="max-width:100%;margin-top:12px;border-radius:8px;">` : "");
+
+  const qTextEl = document.getElementById("qText");
+  qTextEl.innerHTML = q.text + (q.image ? `<br><img src="${q.image}" style="max-width:100%;margin-top:12px;border-radius:8px;">` : "");
+  attachImageFallbacks(qTextEl);
 
   const container = document.getElementById("optionsContainer");
   container.innerHTML = "";
@@ -204,6 +240,7 @@ function renderQuestion() {
     const btn = document.createElement("button");
     btn.className = "option-btn";
     btn.innerHTML = `<strong>(${String.fromCharCode(65 + idx)})</strong> <span>${opt}</span>`;
+    attachImageFallbacks(btn);
     btn.onclick = () => selectOption(idx, btn);
     container.appendChild(btn);
   });
