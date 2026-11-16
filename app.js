@@ -137,6 +137,11 @@ async function startPractice(chapter, fetchAll = false) {
   document.getElementById("qText").innerHTML = `Fetching <strong>${chapter}</strong> PYQs from Supabase...`;
   document.getElementById("optionsContainer").innerHTML = "";
 
+  if (typeof SUPABASE_URL === "undefined" || typeof SUPABASE_ANON_KEY === "undefined") {
+    document.getElementById("qText").innerHTML = "Configuration error: <code>config.js</code> failed to load. Check GitHub Actions deployment.";
+    return;
+  }
+
   const cleanUrl = SUPABASE_URL.trim().replace(/\/$/, "");
   const cleanKey = SUPABASE_ANON_KEY.trim();
 
@@ -182,6 +187,7 @@ async function startPractice(chapter, fetchAll = false) {
     } else {
       activeQuestions = [{
         year: "Empty Chapter",
+        dbChapter: chapter,
         text: `Connected to Supabase! No questions found matching <strong>${chapter}</strong> yet. Try <strong>All ${currentSubject} PYQs</strong> at the top of the chapter list.`,
         options: ["Option A", "Option B", "Option C", "Option D"],
         answer: 0
@@ -190,6 +196,7 @@ async function startPractice(chapter, fetchAll = false) {
   } catch (err) {
     activeQuestions = [{
       year: "Error",
+      dbChapter: chapter,
       text: `Supabase connection error: <code>${err.message}</code>`,
       options: ["Retry", "-", "-", "-"],
       answer: 0
@@ -223,6 +230,7 @@ function attachImageFallbacks(rootEl) {
 }
 
 function renderQuestion() {
+  if (!activeQuestions || activeQuestions.length === 0) return;
   answered = false;
   qSeconds = 0;
   const q = activeQuestions[qIndex];
@@ -274,6 +282,7 @@ function updateStatsUI() {
 }
 
 function nextQuestion() {
+  if (!activeQuestions || activeQuestions.length === 0) return;
   qIndex = (qIndex + 1) % activeQuestions.length;
   renderQuestion();
-}
+}.
